@@ -26,7 +26,7 @@ class QueueElement
 class Lamport
 {
     // processes waiting for ring (and referee) reservation
-    queue<QueueElement> processQueue;
+    vector<queue<QueueElement>> processQueues;
 
     int timestamp;
 
@@ -41,8 +41,8 @@ class Lamport
         timestamp = max(timestamp, received) + 1;
     }
 
-    void enqueue(QueueElement &e)
+    void enqueue(int ringId, QueueElement &e)
     {
-        processQueue.push(e);
+        processQueues[ringId].push(e);
     }
 }
