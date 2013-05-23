@@ -1,48 +1,55 @@
-#define _XOPEN_SOURCE
-#include <mpi.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <queue>
+#include <list>
 #include <algorithm>
+
+#include "lamport.h"
 
 using namespace std;
 
-enum ProcessType { BOXER, WORKER };
-
-class QueueElement
+QueueElement::QueueElement(int timestamp, int id, ProcessType type)
 {
-    int timestamp;
-    int id;
-    ProcessType type;
+    this->timestamp = timestamp;
+    this->id = id;
+    this->type = type;
+}
 
-    public:
-    bool operator<(QueueElement &e)
-    {
-        return this.timestamp < e.timestamp;
+bool QueueElement::operator<(QueueElement &e)
+{
+    return timestamp < e.timestamp;
+}
+
+void Lamport::increment()
+{
+    timestamp++;
+}
+
+void Lamport::update(int received)
+{
+    timestamp = max(timestamp, received) + 1;
+}
+
+void Lamport::enqueue(QueueElement &e)
+{
+    processQueue.push_back(e);
+    processQueue.sort();
+}
+
+QueueElement &Lamport::front()
+{
+    return processQueue.front();
+}
+
+void Lamport::remove(int id)
+{
+    list<QueueElement>::iterator it;
+    for (it = processQueue.begin(); it != processQueue.end(); it++) {
+        if (it->id == id) {
+            processQueue.erase(it);
+        }
+        break;
     }
 }
 
-class Lamport
+int Lamport::getTimestamp()
 {
-    // processes waiting for ring (and referee) reservation
-    vector<queue<QueueElement>> processQueues;
-
-    int timestamp;
-
-    public:
-    void increment()
-    {
-        timestamp++;
-    }
-
-    void update(int received)
-    {
-        timestamp = max(timestamp, received) + 1;
-    }
-
-    void enqueue(int ringId, QueueElement &e)
-    {
-        processQueues[ringId].push(e);
-    }
+    return timestamp;
 }
