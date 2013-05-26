@@ -14,7 +14,11 @@ QueueElement::QueueElement(int timestamp, int id, ProcessType type)
 
 bool QueueElement::operator<(QueueElement &e)
 {
-    return timestamp < e.timestamp;
+    if (timestamp != e.timestamp) {
+        return timestamp < e.timestamp;
+    } else {
+        return id < e.id;
+    }
 }
 
 void Lamport::increment()
