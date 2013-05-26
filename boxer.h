@@ -5,6 +5,6 @@ void fight();
 void rest();
 void acquire();
 void release();
-bool receive();
+int receive();
 
 #endif

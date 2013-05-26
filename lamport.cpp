@@ -1,5 +1,6 @@
 #include <list>
 #include <algorithm>
+#include <stdexcept>
 
 #include "lamport.h"
 
@@ -42,6 +43,14 @@ QueueElement &Lamport::front()
     return processQueue.front();
 }
 
+QueueElement &Lamport::second()
+{
+    if (processQueue.size() < 2) {
+        throw runtime_error("Not enough requests in queue.");
+    }
+    return *(++processQueue.begin());
+}
+
 void Lamport::remove(int id)
 {
     list<QueueElement>::iterator it;
@@ -51,6 +60,11 @@ void Lamport::remove(int id)
         }
         break;
     }
+}
+
+int Lamport::size()
+{
+    return processQueue.size();
 }
 
 int Lamport::getTimestamp()

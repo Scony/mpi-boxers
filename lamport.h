@@ -29,7 +29,9 @@ class Lamport
     void update(int received);
     void enqueue(QueueElement &e);
     QueueElement &front();
+    QueueElement &second();
     void remove(int id);
+    int size();
     int getTimestamp();
 };
 
