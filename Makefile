@@ -1,5 +1,5 @@
 all: boxer.cpp boxer.h lamport.cpp lamport.h
-	mpic++ boxer.cpp lamport.cpp
+	mpic++ boxer.cpp lamport.cpp -o boxers.out
 
 clean:
-	rm a.out
+	rm -f *.out *.o *~
