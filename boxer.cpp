@@ -114,20 +114,18 @@ int takeRing()
 void acquire()
 {
     printf("Boxer %d wants to acquire a ring\n", rank);
-
     request();
 
     int nReplies = 0;
     while ( !(nReplies == size - 1 &&
               lamport.isFirst(rank) &&
               lamport.isSecondBoxer() &&
-              nEmptyRings > 0 &&
-              nAvailableReferees > 0) ) {
+              nEmptyRings > 0 /*&&
+              nAvailableReferees > 0*/) ) {
 
-        //if (rank == 3) {
-        //    lamport.printQueue();
-        //    printf("  nAvailableReferees = %d\n", nAvailableReferees);
-        //}
+        //printf("-----\n");
+        //lamport.printQueue(rank);
+        //printf("   %d: nAvailableReferees = %d\n", rank, nAvailableReferees);
 
         // wait
         // receive msgs etc
