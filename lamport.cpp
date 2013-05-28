@@ -67,6 +67,31 @@ int Lamport::size()
     return processQueue.size();
 }
 
+bool Lamport::isFirst(int id)
+{
+    if (size() >= 1) {
+        return front().id == id;
+    }
+    return false;
+}
+
+bool Lamport::isSecond(int id)
+{
+    if (size() >= 2) {
+        return second().id == id;
+    }
+    return false;
+}
+
+bool Lamport::isSecondBoxer()
+{
+    if (size() >= 2) {
+        return second().type == BOXER;
+    } else {
+        return false;
+    }
+}
+
 int Lamport::getTimestamp()
 {
     return timestamp;

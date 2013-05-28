@@ -5,7 +5,7 @@
 
 using namespace std;
 
-enum ProcessType { BOXER, WORKER };
+enum ProcessType { BOXER, CLEANER };
 
 class QueueElement
 {
@@ -32,6 +32,9 @@ class Lamport
     QueueElement &second();
     void remove(int id);
     int size();
+    bool isFirst(int id);
+    bool isSecond(int id);
+    bool isSecondBoxer();
     int getTimestamp();
 };
 

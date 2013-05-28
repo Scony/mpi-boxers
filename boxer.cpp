@@ -15,12 +15,6 @@
 
 using namespace std;
 
-struct MessageStruct {
-    int timestamp;
-    int ringId;
-    ProcessType type;
-};
-
 int size, rank;
 int opponent = -1;
 Lamport lamport;
@@ -31,46 +25,63 @@ void fight()
     sleep(3 + (random() % 5));
 }
 
+void clean()
+{
+    printf(">>>>>>>>>> Cleaner %d cleaning\n", rank, opponent);
+    sleep(3 + (random() % 5));
+}
+
 void rest()
 {
     printf("Boxer %d resting\n", rank);
     sleep(3 + (random() % 5));
 }
 
-void acquire()
+void cleanerRest()
 {
-    printf("Boxer %d wants to acquire a ring\n", rank);
+    printf("Cleaner %d resting\n", rank);
+    sleep(5 + (random() % 5));
+}
 
+void request(ProcessType type)
+{
     lamport.increment();
-    QueueElement request(lamport.getTimestamp(), rank, BOXER);
-    //printf("Boxer %d's timestamp: %d\n", rank, lamport.getTimestamp());
-    lamport.enqueue(request);
+    QueueElement req(lamport.getTimestamp(), rank, type);
+    lamport.enqueue(req);
 
     // send request to every node
     for (int i = 0; i < size; i++) {
         if (i != rank) {
             MessageStruct message;
-            //printf("Boxer %d's timestamp: %d\n", rank, lamport.getTimestamp());
+            message.type = type;
             message.timestamp = lamport.getTimestamp();
             MPI_Send(&message, sizeof(message), MPI_BYTE,
                      i, MSG_REQUEST, MPI_COMM_WORLD);
         }
     }
+}
+
+void acquire()
+{
+    printf("Boxer %d wants to acquire a ring\n", rank);
+
+    request(BOXER);
 
     int nReplies = 0;
-    while (!(nReplies == size - 1 && lamport.front().id == rank && lamport.size() >= 2)) {
+    while ( !(nReplies == size - 1 &&
+              lamport.isFirst(rank) &&
+              lamport.isSecondBoxer()) ) {
         // wait
         // receive msgs etc
         int messageTag = receive();
         printf("messageTag: %d\n", messageTag);
         if (messageTag == MSG_REPLY) {
-            //printf("============= %d BING!\n", rank);
             nReplies++;
-            //printf("Boxer %d nReplies == %d\n", rank, nReplies);
         } else if (messageTag == MSG_OPPONENT) {
             return;
         }
-        printf("Boxer %d queue front: %d, timestamp: %d\n", rank, lamport.front().id, lamport.front().timestamp);
+        printf("Boxer %d queue front: %d, timestamp: %d\n",
+                rank, lamport.front().id, lamport.front().timestamp);
     }
 
     // tell second boxer?
@@ -88,9 +99,32 @@ void acquire()
 
 }
 
+void cleanerAcquire()
+{
+    printf("Cleaner %d wants to acquire a ring\n", rank);
+
+    request(CLEANER);
+
+    int nReplies = 0;
+    while ( !(nReplies == size - 1 &&
+              (lamport.isFirst(rank) || lamport.isSecond(rank))) ) {
+        // wait
+        // receive msgs etc
+        int messageTag = receive();
+        printf("messageTag: %d\n", messageTag);
+        if (messageTag == MSG_REPLY) {
+            nReplies++;
+        }
+        printf("Cleaner %d queue front: %d, timestamp: %d\n", rank, lamport.front().id, lamport.front().timestamp);
+    }
+
+    printf("Cleaner %d acquired ring\n", rank);
+
+}
+
 void release()
 {
-    printf("Boxer %d releasing ring\n", rank);
+    printf("Process %d releasing ring\n", rank);
 
     // send release msg to every node
     lamport.increment();
@@ -103,7 +137,7 @@ void release()
         }
     }
 
-    printf("Boxer %d released ring\n", rank);
+    printf("Process %d released ring\n", rank);
 }
 
 int receive()
@@ -137,7 +171,8 @@ int receive()
     }
 
     if (status.MPI_TAG == MSG_RELEASE) {
-        printf("Boxer %d received release from boxer %d, timestamp %d\n", rank, processId, message.timestamp);
+        printf("Boxer %d received release from boxer %d, timestamp %d\n",
+               rank, processId, message.timestamp);
         lamport.remove(processId);
     }
 
@@ -149,6 +184,26 @@ int receive()
     return status.MPI_TAG;
 }
 
+void boxerLoop()
+{
+    while (1) {
+        acquire();
+        fight();
+        release();
+        rest();
+    }
+}
+
+void cleanerLoop()
+{
+    while (1) {
+        cleanerRest();
+        cleanerAcquire();
+        clean();
+        release();
+    }
+}
+
 int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);
@@ -156,11 +211,10 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     srand(time(NULL));
 
-    while (1) {
-        acquire();
-        fight();
-        release();
-        rest();
+    if (rank % 4 == 0) {
+        cleanerLoop();
+    } else {
+        boxerLoop();
     }
 
     MPI_Finalize();
