@@ -40,19 +40,28 @@ void clean()
 void rest()
 {
     printf("Boxer %d resting\n", rank);
-    sleep(1 + (random() % 5));
+
+    int period = 1 + (random() % 5);
+    for (int i = 0; i < period; i++) {
+        receive();
+        sleep(1);
+    }
 }
 
 void cleanerRest()
 {
     printf("Cleaner %d resting\n", rank);
-    sleep(2 + (random() % 5));
+    int period = 4 + (random() % 5);
+    for (int i = 0; i < period; i++) {
+        receive();
+        sleep(1);
+    }
 }
 
 void request()
 {
     lamport.increment();
-    printf("Process %d timestamp: %d\n", rank, lamport.getTimestamp());
+    //printf("Process %d timestamp: %d\n", rank, lamport.getTimestamp());
     QueueElement req(lamport.getTimestamp(), rank, type);
     lamport.enqueue(req);
 
@@ -140,6 +149,9 @@ void acquire()
     }
 
     myRing = takeRing();
+    if (myRing < 0) {
+        printf("===== Oops, no empty ring after all?!\n");
+    }
     nAvailableReferees--;
     opponent = lamport.second().id;
     notifyOpponent();
@@ -171,10 +183,18 @@ void cleanerAcquire()
     }
 
     myRing = takeRing();
+    if (myRing < 0) {
+        printf("===== Oops, no empty ring after all?!\n");
+    }
+    lamport.remove(rank);
     notifyOthers();
 
-    printf("Cleaner %d acquired ring\n", rank);
+    //printf("-----\n");
+    //lamport.printQueue(rank);
+    //printf("   %d: timestamp = %d\n", rank, lamport.getTimestamp());
+    //printf("   %d: nAvailableReferees = %d\n", rank, nAvailableReferees);
 
+    printf("Cleaner %d acquired ring\n", rank);
 }
 
 void release()
@@ -189,7 +209,7 @@ void release()
 
     // send release msg to every node
     lamport.increment();
-    printf("Process %d timestamp: %d\n", rank, lamport.getTimestamp());
+    //printf("Process %d timestamp: %d\n", rank, lamport.getTimestamp());
     for (int i = 0; i < size; i++) {
         if (i != rank) {
             MessageStruct message;
@@ -305,8 +325,7 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     srand(time(NULL));
 
-    if (false) {
-    //if (rank % 4 == 0) {
+    if (rank % 8 == 0) {
         type = CLEANER;
         cleanerLoop();
     } else {

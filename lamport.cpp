@@ -58,8 +58,8 @@ void Lamport::remove(int id)
     for (it = processQueue.begin(); it != processQueue.end(); it++) {
         if (it->id == id) {
             processQueue.erase(it);
+            break;
         }
-        break;
     }
 }
 
