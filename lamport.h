@@ -36,6 +36,7 @@ class Lamport
     bool isSecond(int id);
     bool isSecondBoxer();
     int getTimestamp();
+    void printQueue();
 };
 
 #endif

@@ -1,6 +1,7 @@
 #include <list>
 #include <algorithm>
 #include <stdexcept>
+#include <stdio.h>
 
 #include "lamport.h"
 
@@ -95,4 +96,12 @@ bool Lamport::isSecondBoxer()
 int Lamport::getTimestamp()
 {
     return timestamp;
+}
+
+void Lamport::printQueue()
+{
+    list<QueueElement>::iterator it;
+    for (it = processQueue.begin(); it != processQueue.end(); it++) {
+        printf("   process %d, timestamp %d\n", it->id, it->timestamp);
+    }
 }

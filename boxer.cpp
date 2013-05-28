@@ -9,7 +9,7 @@
 #include "boxer.h"
 
 #define NRINGS 5
-#define NREFEREES 2
+#define NREFEREES 4
 
 enum MsgTag { MSG_REQUEST, MSG_RELEASE, MSG_REPLY, MSG_OPPONENT, MSG_NOTIFY };
 
@@ -52,6 +52,7 @@ void cleanerRest()
 void request()
 {
     lamport.increment();
+    printf("Process %d timestamp: %d\n", rank, lamport.getTimestamp());
     QueueElement req(lamport.getTimestamp(), rank, type);
     lamport.enqueue(req);
 
@@ -71,7 +72,8 @@ void notifyOpponent()
 {
     printf("Boxer %d, opponent: %d\n", rank, opponent);
 
-    lamport.increment();
+    //lamport.increment();
+    //printf("Process %d timestamp: %d\n", rank, lamport.getTimestamp());
     MessageStruct message;
     message.timestamp = lamport.getTimestamp();
     message.ringId = myRing;
@@ -82,7 +84,8 @@ void notifyOpponent()
 
 void notifyOthers()
 {
-    lamport.increment();
+    //lamport.increment();
+    //printf("Process %d timestamp: %d\n", rank, lamport.getTimestamp());
     for (int i = 0; i < size; i++) {
         if (i != rank) {
             MessageStruct message;
@@ -120,6 +123,12 @@ void acquire()
               lamport.isSecondBoxer() &&
               nEmptyRings > 0 &&
               nAvailableReferees > 0) ) {
+
+        //if (rank == 3) {
+        //    lamport.printQueue();
+        //    printf("  nAvailableReferees = %d\n", nAvailableReferees);
+        //}
+
         // wait
         // receive msgs etc
         int messageTag = receive();
@@ -136,6 +145,9 @@ void acquire()
     nAvailableReferees--;
     opponent = lamport.second().id;
     notifyOpponent();
+
+    lamport.remove(rank);
+    lamport.remove(opponent);
     notifyOthers();
 
     printf("Boxer %d acquired ring %d\n", rank, myRing);
@@ -179,6 +191,7 @@ void release()
 
     // send release msg to every node
     lamport.increment();
+    printf("Process %d timestamp: %d\n", rank, lamport.getTimestamp());
     for (int i = 0; i < size; i++) {
         if (i != rank) {
             MessageStruct message;
@@ -199,6 +212,7 @@ int receive()
     // if request -> enqueue and reply with timestamp
     // if release -> remove request from queue
     // if reply -> just return message type (calling function can count replies)
+    usleep(100);
 
     MessageStruct message;
     MPI_Status status;
@@ -229,6 +243,9 @@ int receive()
         if (ringTaken[message.ringId]) {
             ringTaken[message.ringId] = false;
             nEmptyRings++;
+            if (message.type == BOXER) {
+                nAvailableReferees--;
+            }
         }
     }
 
@@ -247,8 +264,14 @@ int receive()
             }
         }
         lamport.remove(processId);
+        //if (rank == 1) {
+        //    printf("removed %d\n", processId);
+        //}
         if (message.type == BOXER) {
-            lamport.remove(opponent);
+            lamport.remove(message.opponent);
+            //if (rank == 1) {
+            //    printf("removed %d\n", opponent);
+            //}
         }
     }
 
@@ -284,7 +307,8 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     srand(time(NULL));
 
-    if (rank % 4 == 0) {
+    if (false) {
+    //if (rank % 4 == 0) {
         type = CLEANER;
         cleanerLoop();
     } else {
