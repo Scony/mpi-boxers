@@ -4,6 +4,7 @@
 struct MessageStruct {
     int timestamp;
     int ringId;
+    int opponent;
     ProcessType type;
 };
 
@@ -11,7 +12,7 @@ void fight();
 void clean();
 void rest();
 void cleanerRest();
-void request(ProcessType type);
+void request();
 void notifyOpponent();
 void notifyOthers();
 int takeRing();

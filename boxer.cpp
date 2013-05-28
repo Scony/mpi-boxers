@@ -8,7 +8,8 @@
 #include "lamport.h"
 #include "boxer.h"
 
-#define NRINGS 3
+#define NRINGS 5
+#define NREFEREES 2
 
 enum MsgTag { MSG_REQUEST, MSG_RELEASE, MSG_REPLY, MSG_OPPONENT, MSG_NOTIFY };
 
@@ -17,36 +18,38 @@ using namespace std;
 int size, rank;
 int opponent = -1;
 int myRing;
+ProcessType type = BOXER;
 
 Lamport lamport;
 int nEmptyRings = NRINGS;
+int nAvailableReferees = NREFEREES;
 bool ringTaken[NRINGS] = {false};
 
 void fight()
 {
     printf(">>>>>>>>>> Boxer %d fighting with %d on ring %d\n", rank, opponent, myRing);
-    sleep(3 + (random() % 5));
+    sleep(1 + (random() % 5));
 }
 
 void clean()
 {
     printf(">>>>>>>>>> Cleaner %d cleaning ring %d\n", rank, myRing);
-    sleep(3 + (random() % 5));
+    sleep(1 + (random() % 5));
 }
 
 void rest()
 {
     printf("Boxer %d resting\n", rank);
-    sleep(3 + (random() % 5));
+    sleep(1 + (random() % 5));
 }
 
 void cleanerRest()
 {
     printf("Cleaner %d resting\n", rank);
-    sleep(5 + (random() % 5));
+    sleep(2 + (random() % 5));
 }
 
-void request(ProcessType type)
+void request()
 {
     lamport.increment();
     QueueElement req(lamport.getTimestamp(), rank, type);
@@ -74,7 +77,7 @@ void notifyOpponent()
     message.ringId = myRing;
     MPI_Send(&message, sizeof(message), MPI_BYTE,
              opponent, MSG_OPPONENT, MPI_COMM_WORLD);
-    printf("Boxer %d notifying opponent: %d\n", rank, lamport.second());
+    //printf("Boxer %d notifying opponent: %d\n", rank, lamport.second());
 }
 
 void notifyOthers()
@@ -85,6 +88,9 @@ void notifyOthers()
             MessageStruct message;
             message.ringId = myRing;
             message.timestamp = lamport.getTimestamp();
+            if (type == BOXER) {
+                message.opponent = opponent;
+            }
             MPI_Send(&message, sizeof(message), MPI_BYTE,
                      i, MSG_NOTIFY, MPI_COMM_WORLD);
         }
@@ -106,27 +112,28 @@ void acquire()
 {
     printf("Boxer %d wants to acquire a ring\n", rank);
 
-    request(BOXER);
+    request();
 
     int nReplies = 0;
     while ( !(nReplies == size - 1 &&
               lamport.isFirst(rank) &&
               lamport.isSecondBoxer() &&
-              nEmptyRings > 0) ) {
+              nEmptyRings > 0 &&
+              nAvailableReferees > 0) ) {
         // wait
         // receive msgs etc
         int messageTag = receive();
-        printf("messageTag: %d\n", messageTag);
         if (messageTag == MSG_REPLY) {
             nReplies++;
         } else if (messageTag == MSG_OPPONENT) {
             return;
         }
-        printf("Boxer %d queue front: %d, timestamp: %d\n",
-                rank, lamport.front().id, lamport.front().timestamp);
+        //printf("Boxer %d queue front: %d, timestamp: %d\n",
+        //        rank, lamport.front().id, lamport.front().timestamp);
     }
 
     myRing = takeRing();
+    nAvailableReferees--;
     opponent = lamport.second().id;
     notifyOpponent();
     notifyOthers();
@@ -138,7 +145,7 @@ void cleanerAcquire()
 {
     printf("Cleaner %d wants to acquire a ring\n", rank);
 
-    request(CLEANER);
+    request();
 
     int nReplies = 0;
     while ( !(nReplies == size - 1 &&
@@ -147,11 +154,10 @@ void cleanerAcquire()
         // wait
         // receive msgs etc
         int messageTag = receive();
-        printf("messageTag: %d\n", messageTag);
         if (messageTag == MSG_REPLY) {
             nReplies++;
         }
-        printf("Cleaner %d queue front: %d, timestamp: %d\n", rank, lamport.front().id, lamport.front().timestamp);
+        //printf("Cleaner %d queue front: %d, timestamp: %d\n", rank, lamport.front().id, lamport.front().timestamp);
     }
 
     myRing = takeRing();
@@ -167,6 +173,9 @@ void release()
 
     ringTaken[myRing] = false;
     nEmptyRings++;
+    if (type == BOXER) {
+        nAvailableReferees++;
+    }
 
     // send release msg to every node
     lamport.increment();
@@ -175,6 +184,7 @@ void release()
             MessageStruct message;
             message.timestamp = lamport.getTimestamp();
             message.ringId = myRing;
+            message.type = type;
             MPI_Send(&message, sizeof(message), MPI_BYTE,
                      i, MSG_RELEASE, MPI_COMM_WORLD);
         }
@@ -198,7 +208,7 @@ int receive()
     int processId = status.MPI_SOURCE;
 
     if (status.MPI_TAG == MSG_REQUEST) {
-        printf("Boxer %d received request from boxer %d, timestamp %d\n", rank, processId, message.timestamp);
+        //printf("Boxer %d received request from boxer %d, timestamp %d\n", rank, processId, message.timestamp);
         QueueElement request(message.timestamp, processId, message.type);
         lamport.enqueue(request);
 
@@ -209,13 +219,13 @@ int receive()
     }
 
     if (status.MPI_TAG == MSG_REPLY) {
-        printf("Boxer %d received reply from %d\n", rank, status.MPI_SOURCE);
+        //printf("Boxer %d received reply from %d\n", rank, status.MPI_SOURCE);
         return MSG_REPLY;
     }
 
     if (status.MPI_TAG == MSG_RELEASE) {
-        printf("Boxer %d received release from boxer %d, timestamp %d\n",
-               rank, processId, message.timestamp);
+        //printf("Boxer %d received release from boxer %d, timestamp %d\n",
+        //       rank, processId, message.timestamp);
         if (ringTaken[message.ringId]) {
             ringTaken[message.ringId] = false;
             nEmptyRings++;
@@ -232,8 +242,14 @@ int receive()
         if (!ringTaken[message.ringId]) {
             ringTaken[message.ringId] = true;
             nEmptyRings--;
+            if (message.type == BOXER) {
+                nAvailableReferees--;
+            }
         }
         lamport.remove(processId);
+        if (message.type == BOXER) {
+            lamport.remove(opponent);
+        }
     }
 
     return status.MPI_TAG;
@@ -269,8 +285,10 @@ int main(int argc, char **argv)
     srand(time(NULL));
 
     if (rank % 4 == 0) {
+        type = CLEANER;
         cleanerLoop();
     } else {
+        type = BOXER;
         boxerLoop();
     }
 
