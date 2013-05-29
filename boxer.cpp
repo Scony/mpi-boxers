@@ -43,9 +43,10 @@ void rest()
 
     int period = 1 + (random() % 5);
     for (int i = 0; i < period; i++) {
-        receive();
-        sleep(1);
+       receive();
+       sleep(1);
     }
+    // sleep(period);
 }
 
 void cleanerRest()
@@ -53,9 +54,10 @@ void cleanerRest()
     printf("Cleaner %d resting\n", rank);
     int period = 4 + (random() % 5);
     for (int i = 0; i < period; i++) {
-        receive();
-        sleep(1);
+       receive();
+       sleep(1);
     }
+    // sleep(period);
 }
 
 void request()
@@ -100,6 +102,7 @@ void notifyOthers()
             MessageStruct message;
             message.ringId = myRing;
             message.timestamp = lamport.getTimestamp();
+            message.type = type;
             if (type == BOXER) {
                 message.opponent = opponent;
             }
@@ -126,15 +129,17 @@ void acquire()
     request();
 
     int nReplies = 0;
-    while ( !(nReplies == size - 1 &&
+    while ( !(nReplies == size - 1 && // maybe >=
               lamport.isFirst(rank) &&
               lamport.isSecondBoxer() &&
-              nEmptyRings > 0 /*&&
-              nAvailableReferees > 0*/) ) {
+              nEmptyRings > 0 &&
+              nAvailableReferees > 0) ) {
 
-        //printf("-----\n");
-        //lamport.printQueue(rank);
-        //printf("   %d: nAvailableReferees = %d\n", rank, nAvailableReferees);
+        printf("-----\n");
+        lamport.printQueue(rank);
+        printf("   %d: nAvailableReferees = %d\n", rank, nAvailableReferees);
+        printf("   %d: nEmptyRings = %d\n", rank, nEmptyRings);
+        printf("   %d: nReplies = %d/%d\n", rank, nReplies, size-1);
 
         // wait
         // receive msgs etc
@@ -149,6 +154,7 @@ void acquire()
     }
 
     myRing = takeRing();
+    nEmptyRings--;
     if (myRing < 0) {
         printf("===== Oops, no empty ring after all?!\n");
     }
@@ -170,7 +176,7 @@ void cleanerAcquire()
     request();
 
     int nReplies = 0;
-    while ( !(nReplies == size - 1 &&
+    while ( !(nReplies == size - 1 && // maybe >=
               (lamport.isFirst(rank) || lamport.isSecond(rank)) &&
               nEmptyRings > 0) ) {
         // wait
@@ -183,6 +189,7 @@ void cleanerAcquire()
     }
 
     myRing = takeRing();
+    nEmptyRings--;
     if (myRing < 0) {
         printf("===== Oops, no empty ring after all?!\n");
     }
@@ -262,7 +269,7 @@ int receive()
             ringTaken[message.ringId] = false;
             nEmptyRings++;
             if (message.type == BOXER) {
-                nAvailableReferees--;
+                nAvailableReferees++;
             }
         }
     }

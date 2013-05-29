@@ -1,0 +1,4 @@
+- nEmptyRings nie zgadza sie z ringTaken[]
+- nReplies > size -1 ?!?!?!?! -- receive podczas rest?
+    - moze sprawdzac tablice receivedFrom[]
+    - >= zamiast == pomoglo ale moze byc niepoprawne
