@@ -20,6 +20,7 @@ void acquire();
 void cleanerAcquire();
 void release();
 int receive();
+int ireceive();
 void boxerLoop();
 void cleanerLoop();
 
