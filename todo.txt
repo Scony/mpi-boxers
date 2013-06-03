@@ -1,6 +1,3 @@
 - nEmptyRings nie zgadza sie z ringTaken[]
     - wywalono nEmptyRings -- problem solved
-!!! - nReplies > size -1 ?!?!?!?! -- receive podczas rest?
-    - moze sprawdzac tablice receivedFrom[]
-    - >= zamiast == pomoglo ale moze byc niepoprawne
 - przy wielu kompach nAvailableReferies < 0 ??

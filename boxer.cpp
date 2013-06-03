@@ -10,6 +10,7 @@
 
 #define NRINGS 5
 #define NREFEREES 4
+#define NPROCS 32
 
 enum MsgTag { MSG_REQUEST, MSG_RELEASE, MSG_REPLY, MSG_OPPONENT, MSG_NOTIFY };
 
@@ -24,6 +25,7 @@ Lamport lamport;
 //int nEmptyRings = NRINGS;
 int nAvailableReferees = NREFEREES;
 bool ringTaken[NRINGS] = {false};
+bool replied[NPROCS] = {false};
 
 void fight()
 {
@@ -136,13 +138,31 @@ int countRings()
     return count;
 }
 
+bool allReplied()
+{
+    for (int i = 0; i < size; i++) {
+        if (i != rank && !replied[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void clearReplied()
+{
+    for (int i = 0; i < size; i++) {
+        replied[i] = false;
+    }
+}
+
 void acquire()
 {
     printf("Boxer %d wants to acquire a ring\n", rank);
     request();
 
     int nReplies = 0;
-    while ( !(nReplies == size - 1 && // maybe >=
+    clearReplied();
+    while ( !(allReplied() &&
               lamport.isFirst(rank) &&
               lamport.isSecondBoxer() &&
               countRings() > 0 &&
@@ -194,7 +214,8 @@ void cleanerAcquire()
     request();
 
     int nReplies = 0;
-    while ( !(nReplies == size - 1 && // maybe >=
+    clearReplied();
+    while ( !(allReplied() &&
               (lamport.isFirst(rank) || lamport.isSecond(rank)) &&
               countRings() > 0) ) {
         // wait
@@ -277,7 +298,11 @@ int receive()
 
     if (status.MPI_TAG == MSG_REPLY) {
         //printf("Boxer %d received reply from %d\n", rank, status.MPI_SOURCE);
-        return MSG_REPLY;
+        if (!replied[status.MPI_SOURCE]) {
+            replied[status.MPI_SOURCE] = true;
+            return MSG_REPLY;
+        }
+        return -1;
     }
 
     if (status.MPI_TAG == MSG_RELEASE) {
