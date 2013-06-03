@@ -170,7 +170,8 @@ void acquire()
 
         int count = countRings();
         printf("-----\n");
-        lamport.printQueue(rank);
+	if(nReplies==size-1)
+	  lamport.printQueue(rank);
         printf("   %d: nAvailableReferees = %d\n", rank, nAvailableReferees);
         // printf("   %d: nEmptyRings = %d, countRings() = %d\n", rank, nEmptyRings, count);
         printf("   %d: nReplies = %d/%d\n", rank, nReplies, size-1);
