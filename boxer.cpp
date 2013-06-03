@@ -94,7 +94,7 @@ void notifyOpponent()
     message.ringId = myRing;
     MPI_Send(&message, sizeof(message), MPI_BYTE,
              opponent, MSG_OPPONENT, MPI_COMM_WORLD);
-    //printf("Boxer %d notifying opponent: %d\n", rank, lamport.second());
+    printf("Boxer %d notifying opponent: %d\n", rank, lamport.second().id);
 }
 
 void notifyOthers()
