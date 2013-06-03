@@ -1,0 +1,56 @@
+\documentclass{article}
+
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[OT4]{fontenc}
+\usepackage{graphicx,color}
+\usepackage{listings}
+\selectlanguage{polish}
+
+\title{\textbf{Laboratorium Podstawy Przetwarzania Rozproszonego}}
+\author{Jakub Szwachła \\ 101473 \and  Paweł Lampe \\ 99277}
+
+\begin{document}
+
+\maketitle
+
+\section{Algorytm rozwiązania}
+\subsection{Definicja problemu}
+treść
+
+\subsection{Założenia przyjętego modelu komunikacji}
+\begin{itemize}
+\item asynchroniczny system z wymianą komunikatów
+\item topologia połączeń: \emph{każdy z każdym / specjalna topologia}
+\item wymagana pojemność kanału:  \emph{wiadomości w jednym kierunku / nieskończona}
+\item inne wymagane własności sieci komunikacyjnej: \emph{kanały typu FIFO, transmisja rozgłoszeniowa}
+\end{itemize}
+
+\subsection{Algorytm wzajemnego wykluczania}
+event driven albo tekst
+
+\subsection{Analiza złożoności komunikacyjnej algorytmu}
+złożoność pojedynczego przebiegu jednej instancji algorytmu (czyli z punktu widzenia pojedynczego procesu) 
+złożoność komunikacyjna pakietowa, wyrażona w liczbie komunikatów
+złożoność czasowa przy założeniu jednostkowego czasu przesłania pojedynczego komunikatu w kanale
+należy wyznaczyć dokładną złożoność (nie rząd złożoności), a gdy możliwe są różne przypadki – należy podać złożoność pesymistyczną oraz średnią
+
+\section{Implementacja rozwiązania}
+lamport.h
+\hrule
+\lstinputlisting[language=C++]{lamport.h}
+\hrule
+lamport.cpp
+\hrule
+\lstinputlisting[language=C++]{lamport.cpp}
+\hrule
+boxer.h
+\hrule
+\lstinputlisting[language=C++]{boxer.h}
+\hrule
+boxer.cpp
+\hrule
+\lstinputlisting[language=C++]{boxer.cpp}
+\hrule
+
+\end{document}
