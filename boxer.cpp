@@ -21,7 +21,7 @@ int myRing;
 ProcessType type = BOXER;
 
 Lamport lamport;
-int nEmptyRings = NRINGS;
+//int nEmptyRings = NRINGS;
 int nAvailableReferees = NREFEREES;
 bool ringTaken[NRINGS] = {false};
 
@@ -45,7 +45,7 @@ void rest()
     for (int i = 0; i < period; i++) {
        // ireceive();
        // receive();
-       // sleep(1);
+       sleep(1);
     }
     // sleep(period);
 }
@@ -57,7 +57,7 @@ void cleanerRest()
     for (int i = 0; i < period; i++) {
        // ireceive();
        // receive();
-       // sleep(1);
+       sleep(1);
     }
     // sleep(period);
 }
@@ -125,6 +125,17 @@ int takeRing()
     return -1;
 }
 
+int countRings()
+{
+    int count = 0;
+    for (int i = 0; i < NRINGS; i++) {
+        if (!ringTaken[i]) {
+            count++;
+        }
+    }
+    return count;
+}
+
 void acquire()
 {
     printf("Boxer %d wants to acquire a ring\n", rank);
@@ -134,14 +145,18 @@ void acquire()
     while ( !(nReplies == size - 1 && // maybe >=
               lamport.isFirst(rank) &&
               lamport.isSecondBoxer() &&
-              nEmptyRings > 0 &&
+              countRings() > 0 &&
               nAvailableReferees > 0) ) {
 
-        // printf("-----\n");
-        // lamport.printQueue(rank);
-        // printf("   %d: nAvailableReferees = %d\n", rank, nAvailableReferees);
-        // printf("   %d: nEmptyRings = %d\n", rank, nEmptyRings);
-        // printf("   %d: nReplies = %d/%d\n", rank, nReplies, size-1);
+        int count = countRings();
+        printf("-----\n");
+        lamport.printQueue(rank);
+        printf("   %d: nAvailableReferees = %d\n", rank, nAvailableReferees);
+        // printf("   %d: nEmptyRings = %d, countRings() = %d\n", rank, nEmptyRings, count);
+        printf("   %d: nReplies = %d/%d\n", rank, nReplies, size-1);
+        // if (nEmptyRings != count) {
+        //     dprintf(2, "nie zgadza sie %d != %d\n", nEmptyRings, count);
+        // }
 
         // wait
         // receive msgs etc
@@ -156,7 +171,8 @@ void acquire()
     }
 
     myRing = takeRing();
-    nEmptyRings--;
+    if (myRing < 0) dprintf(2, "takeRing returned -1\n");
+    //nEmptyRings--;
     if (myRing < 0) {
         printf("===== Oops, no empty ring after all?!\n");
     }
@@ -180,7 +196,7 @@ void cleanerAcquire()
     int nReplies = 0;
     while ( !(nReplies == size - 1 && // maybe >=
               (lamport.isFirst(rank) || lamport.isSecond(rank)) &&
-              nEmptyRings > 0) ) {
+              countRings() > 0) ) {
         // wait
         // receive msgs etc
         int messageTag = receive();
@@ -191,7 +207,7 @@ void cleanerAcquire()
     }
 
     myRing = takeRing();
-    nEmptyRings--;
+    //nEmptyRings--;
     if (myRing < 0) {
         printf("===== Oops, no empty ring after all?!\n");
     }
@@ -211,7 +227,7 @@ void release()
     printf("Process %d releasing ring\n", rank);
 
     ringTaken[myRing] = false;
-    nEmptyRings++;
+    //nEmptyRings++;
     if (type == BOXER) {
         nAvailableReferees++;
     }
@@ -269,7 +285,7 @@ int receive()
         //       rank, processId, message.timestamp);
         if (ringTaken[message.ringId]) {
             ringTaken[message.ringId] = false;
-            nEmptyRings++;
+            //nEmptyRings++;
             if (message.type == BOXER) {
                 nAvailableReferees++;
             }
@@ -285,7 +301,7 @@ int receive()
     if (status.MPI_TAG == MSG_NOTIFY) {
         if (!ringTaken[message.ringId]) {
             ringTaken[message.ringId] = true;
-            nEmptyRings--;
+            //nEmptyRings--;
             if (message.type == BOXER) {
                 nAvailableReferees--;
             }
@@ -318,9 +334,13 @@ int ireceive()
     MPI_Request req;
     MPI_Status status;
     int flag = 0;
-    MPI_Irecv(&message, sizeof(message), MPI_BYTE,
-            MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
-    MPI_Test(&req, &flag, &status);
+    MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+    if (!flag) {
+        return -1;
+    }
+    MPI_Recv(&message, sizeof(message), MPI_BYTE,
+            MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+    //MPI_Test(&req, &flag, &status);
     if (flag == 0)		// nothing received
       return -1;
 
@@ -348,7 +368,7 @@ int ireceive()
         //       rank, processId, message.timestamp);
         if (ringTaken[message.ringId]) {
             ringTaken[message.ringId] = false;
-            nEmptyRings++;
+            //nEmptyRings++;
             if (message.type == BOXER) {
                 nAvailableReferees++;
             }
@@ -364,7 +384,7 @@ int ireceive()
     if (status.MPI_TAG == MSG_NOTIFY) {
         if (!ringTaken[message.ringId]) {
             ringTaken[message.ringId] = true;
-            nEmptyRings--;
+            //nEmptyRings--;
             if (message.type == BOXER) {
                 nAvailableReferees--;
             }
