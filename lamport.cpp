@@ -100,8 +100,11 @@ int Lamport::getTimestamp()
 
 void Lamport::printQueue(int rank)
 {
+    char token = (random() % 26) + 'a';
+    int i = 0;
     list<QueueElement>::iterator it;
     for (it = processQueue.begin(); it != processQueue.end(); it++) {
-        printf("   %d: process %d, timestamp %d\n", rank, it->id, it->timestamp);
+        printf("   %d[%c]: %dth process %d, timestamp %d\n", rank, token, i, it->id, it->timestamp);
+        i++;
     }
 }
