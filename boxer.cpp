@@ -22,7 +22,6 @@ int myRing;
 ProcessType type = BOXER;
 
 Lamport lamport;
-//int nEmptyRings = NRINGS;
 int nAvailableReferees = NREFEREES;
 bool ringTaken[NRINGS] = {false};
 bool replied[NPROCS] = {false};
@@ -45,7 +44,7 @@ void rest()
 
     int period = 1 + (random() % 3);
     for (int i = 0; i < period; i++) {
-       ireceive();
+       receive();
        sleep(1);
     }
 }
@@ -55,7 +54,7 @@ void cleanerRest()
     printf("Cleaner %d resting\n", rank);
     int period = 4 + (random() % 5);
     for (int i = 0; i < period; i++) {
-       ireceive();
+       receive();
        sleep(1);
     }
 }
@@ -158,9 +157,6 @@ void debug()
     lamport.printQueue(rank);
     printf("   %d: nAvailableReferees = %d\n", rank, nAvailableReferees);
     printf("   %d: countRings() = %d\n", rank, count);
-    // if (nEmptyRings != count) {
-    //     dprintf(2, "nie zgadza sie %d != %d\n", nEmptyRings, count);
-    // }
 }
 
 void acquire()
@@ -175,9 +171,6 @@ void acquire()
               countRings() > 0 &&
               nAvailableReferees > 0) ) {
 
-	if (allReplied()) {
-            debug();
-        }
         // wait
         // receive msgs etc
         int messageTag = receive();
@@ -186,6 +179,9 @@ void acquire()
         }
         //printf("Boxer %d queue front: %d, timestamp: %d\n",
         //        rank, lamport.front().id, lamport.front().timestamp);
+	if (allReplied() && messageTag != -1) {
+            debug();
+        }
     }
 
     myRing = takeRing();
@@ -222,7 +218,6 @@ void cleanerAcquire()
     }
 
     myRing = takeRing();
-    //nEmptyRings--;
     if (myRing < 0) {
         printf("===== Oops, no empty ring after all?!\n");
     }
@@ -242,7 +237,6 @@ void release()
     printf("Process %d releasing ring\n", rank);
 
     ringTaken[myRing] = false;
-    //nEmptyRings++;
     if (type == BOXER) {
         nAvailableReferees++;
     }
@@ -270,87 +264,9 @@ int receive()
     // if request -> enqueue and reply with timestamp
     // if release -> remove request from queue
     // if reply -> just return message type (calling function can count replies)
-    //usleep(100);
+    usleep(100000); // 100 ms
 
     MessageStruct message;
-    MPI_Status status;
-    MPI_Recv(&message, sizeof(message), MPI_BYTE,
-            MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-    lamport.update(message.timestamp);
-    int processId = status.MPI_SOURCE;
-
-    if (status.MPI_TAG == MSG_REQUEST) {
-        //printf("Boxer %d received request from boxer %d, timestamp %d\n", rank, processId, message.timestamp);
-        QueueElement request(message.timestamp, processId, message.type);
-        lamport.enqueue(request);
-
-        MessageStruct reply;
-        reply.timestamp = lamport.getTimestamp();
-        MPI_Send(&reply, sizeof(reply), MPI_BYTE,
-                processId, MSG_REPLY, MPI_COMM_WORLD);
-    }
-
-    if (status.MPI_TAG == MSG_REPLY) {
-        //printf("Boxer %d received reply from %d\n", rank, status.MPI_SOURCE);
-        if (!replied[status.MPI_SOURCE]) {
-            replied[status.MPI_SOURCE] = true;
-            return MSG_REPLY;
-        }
-        return -1;
-    }
-
-    if (status.MPI_TAG == MSG_RELEASE) {
-        //printf("Boxer %d received release from boxer %d, timestamp %d\n",
-        //       rank, processId, message.timestamp);
-        if (ringTaken[message.ringId]) {
-            ringTaken[message.ringId] = false;
-            //nEmptyRings++;
-            if (message.type == BOXER) {
-                nAvailableReferees++;
-            }
-        }
-    }
-
-    if (status.MPI_TAG == MSG_OPPONENT) {
-        opponent = status.MPI_SOURCE;
-        myRing = message.ringId;
-        printf("Boxer %d notified by opponent\n", rank);
-    }
-
-    if (status.MPI_TAG == MSG_NOTIFY) {
-        if (!ringTaken[message.ringId]) {
-            ringTaken[message.ringId] = true;
-            //nEmptyRings--;
-            if (message.type == BOXER) {
-                nAvailableReferees--;
-            }
-        }
-        lamport.remove(processId);
-        //if (rank == 1) {
-        //    printf("removed %d\n", processId);
-        //}
-        if (message.type == BOXER) {
-            lamport.remove(message.opponent);
-            //if (rank == 1) {
-            //    printf("removed %d\n", opponent);
-            //}
-        }
-    }
-
-    return status.MPI_TAG;
-}
-
-int ireceive()
-{
-    // non-blocking receive
-    // update timestamp
-    // if request -> enqueue and reply with timestamp
-    // if release -> remove request from queue
-    // if reply -> just return message type (calling function can count replies)
-    //usleep(100);
-
-    MessageStruct message;
-    MPI_Request req;
     MPI_Status status;
     int flag = 0;
     MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
@@ -359,15 +275,11 @@ int ireceive()
     }
     MPI_Recv(&message, sizeof(message), MPI_BYTE,
             MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-    //MPI_Test(&req, &flag, &status);
-    if (flag == 0)		// nothing received
-      return -1;
-
     lamport.update(message.timestamp);
     int processId = status.MPI_SOURCE;
 
     if (status.MPI_TAG == MSG_REQUEST) {
-        //printf("Boxer %d received request from boxer %d, timestamp %d\n", rank, processId, message.timestamp);
+        // printf("Boxer %d received request from boxer %d, timestamp %d\n", rank, processId, message.timestamp);
         QueueElement request(message.timestamp, processId, message.type);
         lamport.enqueue(request);
 
@@ -378,16 +290,19 @@ int ireceive()
     }
 
     if (status.MPI_TAG == MSG_REPLY) {
-        //printf("Boxer %d received reply from %d\n", rank, status.MPI_SOURCE);
-        return MSG_REPLY;
+        // printf("Boxer %d received reply from %d\n", rank, status.MPI_SOURCE);
+        if (!replied[status.MPI_SOURCE]) {
+            replied[status.MPI_SOURCE] = true;
+            return MSG_REPLY;
+        }
+        return -1;
     }
 
     if (status.MPI_TAG == MSG_RELEASE) {
-        //printf("Boxer %d received release from boxer %d, timestamp %d\n",
-        //       rank, processId, message.timestamp);
+        printf("Boxer %d received release from boxer %d, timestamp %d\n",
+              rank, processId, message.timestamp);
         if (ringTaken[message.ringId]) {
             ringTaken[message.ringId] = false;
-            //nEmptyRings++;
             if (message.type == BOXER) {
                 nAvailableReferees++;
             }
@@ -401,9 +316,9 @@ int ireceive()
     }
 
     if (status.MPI_TAG == MSG_NOTIFY) {
+        printf("Boxer %d received notify\n", rank);
         if (!ringTaken[message.ringId]) {
             ringTaken[message.ringId] = true;
-            //nEmptyRings--;
             if (message.type == BOXER) {
                 nAvailableReferees--;
             }
