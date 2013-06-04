@@ -30,22 +30,22 @@ bool replied[NPROCS] = {false};
 void fight()
 {
     printf(">>>>>>>>>> Boxer %d fighting with %d on ring %d\n", rank, opponent, myRing);
-    sleep(1 + (random() % 5));
+    sleep(1 + (random() % 3));
 }
 
 void clean()
 {
     printf(">>>>>>>>>> Cleaner %d cleaning ring %d\n", rank, myRing);
-    sleep(1 + (random() % 5));
+    sleep(1 + (random() % 3));
 }
 
 void rest()
 {
     printf("Boxer %d resting\n", rank);
 
-    int period = 1 + (random() % 5);
+    int period = 1 + (random() % 3);
     for (int i = 0; i < period; i++) {
-       // ireceive();
+       ireceive();
        // receive();
        sleep(1);
     }
@@ -155,6 +155,18 @@ void clearReplied()
     }
 }
 
+void debug()
+{
+    // printf("-----\n");
+    int count = countRings();
+    lamport.printQueue(rank);
+    printf("   %d: nAvailableReferees = %d\n", rank, nAvailableReferees);
+    printf("   %d: countRings() = %d\n", rank, count);
+    // if (nEmptyRings != count) {
+    //     dprintf(2, "nie zgadza sie %d != %d\n", nEmptyRings, count);
+    // }
+}
+
 void acquire()
 {
     printf("Boxer %d wants to acquire a ring\n", rank);
@@ -168,17 +180,9 @@ void acquire()
               countRings() > 0 &&
               nAvailableReferees > 0) ) {
 
-        int count = countRings();
-        printf("-----\n");
-	if(nReplies==size-1)
-	  lamport.printQueue(rank);
-        printf("   %d: nAvailableReferees = %d\n", rank, nAvailableReferees);
-        // printf("   %d: nEmptyRings = %d, countRings() = %d\n", rank, nEmptyRings, count);
-        printf("   %d: nReplies = %d/%d\n", rank, nReplies, size-1);
-        // if (nEmptyRings != count) {
-        //     dprintf(2, "nie zgadza sie %d != %d\n", nEmptyRings, count);
-        // }
-
+	if (allReplied()) {
+            debug();
+        }
         // wait
         // receive msgs etc
         int messageTag = receive();
@@ -219,6 +223,9 @@ void cleanerAcquire()
     while ( !(allReplied() &&
               (lamport.isFirst(rank) || lamport.isSecond(rank)) &&
               countRings() > 0) ) {
+	if (allReplied()) {
+            debug();
+        }
         // wait
         // receive msgs etc
         int messageTag = receive();
@@ -277,7 +284,7 @@ int receive()
     // if request -> enqueue and reply with timestamp
     // if release -> remove request from queue
     // if reply -> just return message type (calling function can count replies)
-    usleep(100);
+    //usleep(100);
 
     MessageStruct message;
     MPI_Status status;
@@ -354,7 +361,7 @@ int ireceive()
     // if request -> enqueue and reply with timestamp
     // if release -> remove request from queue
     // if reply -> just return message type (calling function can count replies)
-    usleep(100);
+    //usleep(100);
 
     MessageStruct message;
     MPI_Request req;
