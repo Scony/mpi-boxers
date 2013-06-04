@@ -57,7 +57,7 @@ void cleanerRest()
     printf("Cleaner %d resting\n", rank);
     int period = 4 + (random() % 5);
     for (int i = 0; i < period; i++) {
-       // ireceive();
+       ireceive();
        // receive();
        sleep(1);
     }
