@@ -46,10 +46,8 @@ void rest()
     int period = 1 + (random() % 3);
     for (int i = 0; i < period; i++) {
        ireceive();
-       // receive();
        sleep(1);
     }
-    // sleep(period);
 }
 
 void cleanerRest()
@@ -58,10 +56,8 @@ void cleanerRest()
     int period = 4 + (random() % 5);
     for (int i = 0; i < period; i++) {
        ireceive();
-       // receive();
        sleep(1);
     }
-    // sleep(period);
 }
 
 void request()
@@ -172,7 +168,6 @@ void acquire()
     printf("Boxer %d wants to acquire a ring\n", rank);
     request();
 
-    int nReplies = 0;
     clearReplied();
     while ( !(allReplied() &&
               lamport.isFirst(rank) &&
@@ -186,9 +181,7 @@ void acquire()
         // wait
         // receive msgs etc
         int messageTag = receive();
-        if (messageTag == MSG_REPLY) {
-            nReplies++;
-        } else if (messageTag == MSG_OPPONENT) {
+	if (messageTag == MSG_OPPONENT) {
             return;
         }
         //printf("Boxer %d queue front: %d, timestamp: %d\n",
@@ -197,10 +190,7 @@ void acquire()
 
     myRing = takeRing();
     if (myRing < 0) dprintf(2, "takeRing returned -1\n");
-    //nEmptyRings--;
-    if (myRing < 0) {
-        printf("===== Oops, no empty ring after all?!\n");
-    }
+
     nAvailableReferees--;
     opponent = lamport.second().id;
     notifyOpponent();
