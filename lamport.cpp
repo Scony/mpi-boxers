@@ -88,9 +88,8 @@ bool Lamport::isSecondBoxer()
 {
     if (size() >= 2) {
         return second().type == BOXER;
-    } else {
-        return false;
     }
+    return false;
 }
 
 int Lamport::getTimestamp()

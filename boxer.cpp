@@ -208,7 +208,6 @@ void cleanerAcquire()
 
     request();
 
-    int nReplies = 0;
     clearReplied();
     while ( !(allReplied() &&
               (lamport.isFirst(rank) || lamport.isSecond(rank)) &&
@@ -218,10 +217,7 @@ void cleanerAcquire()
         }
         // wait
         // receive msgs etc
-        int messageTag = receive();
-        if (messageTag == MSG_REPLY) {
-            nReplies++;
-        }
+        receive();
         //printf("Cleaner %d queue front: %d, timestamp: %d\n", rank, lamport.front().id, lamport.front().timestamp);
     }
 
