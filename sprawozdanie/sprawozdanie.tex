@@ -1,0 +1,139 @@
+\documentclass{article}
+
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[OT4]{fontenc}
+\usepackage{graphicx,color}
+\usepackage{listings}
+\selectlanguage{polish}
+
+\title{\textbf{Laboratorium Podstawy Przetwarzania Rozproszonego}}
+\author{Jakub Szwachła \\ 101473 \and  Paweł Lampe \\ 99277}
+
+\begin{document}
+
+\maketitle
+
+\section{Algorytm rozwiązania}
+\subsection{Definicja problemu}
+treść
+
+\subsection{Założenia przyjętego modelu komunikacji}
+\begin{itemize}
+\item asynchroniczny system z wymianą komunikatów
+\item topologia połączeń: \emph{każdy z każdym}
+\item wymagana pojemność kanału:  \emph{wiadomości w jednym kierunku / nieskończona}
+\item inne wymagane własności sieci komunikacyjnej: \emph{kanały typu FIFO, transmisja rozgłoszeniowa}
+\end{itemize}
+
+\subsection{Algorytm wzajemnego wykluczania}
+
+Pętla boksera:
+\begin{itemize}
+    \item Rezerwacja ringu
+    \item Walka
+    \item Zwolnienie ringu (bokser o większym id z pary)
+    \item Rekowalescencja
+\end{itemize}
+
+Pętla sprzątacza:
+\begin{itemize}
+    \item Odpoczynek
+    \item Rezerwacja ringu
+    \item Sprzątanie
+    \item Zwolnienie ringu
+\end{itemize}
+
+W czasie oczekiwania na ring oraz odpoczynku procesy przyjmują i reagują
+na wiadomości.
+
+Bokser -- Rezerwacja ringu:
+\begin{itemize}
+    \item Zwiększ zegar lamporta
+    \item Dodaj żądanie do własnej kolejki
+    \item Wyślij żądanie do pozostałych procesów \verb|MSG_REQUEST|
+    \item Czekaj aż będą spełnione warunki: otrzymano odpowiedź od
+    wszystkich procesów, jest dostępny conajmniej jeden ring i jeden
+    sędzia, jesteś pierwszy w kolejce a drugi proces w kolejce jest
+    bokserem
+    \item Sekcja krytyczna:
+    \begin{itemize}
+        \item Znajdź pierwszy wolny ring i zajmij go (zaznacz w tablicy)
+        \item Zmniejsz lokalną liczbę dostępnych sędziów
+    \end{itemize}
+    \item Powiadom drugiego boksera (przeciwnika) \verb|MSG_OPPONENT|
+    \item Usuń swoje żądanie oraz żądanie przeciwnika z lokalnej kolejki
+    \item Powiadom wszystkie pozostałe procesy o zajętym ringu i o tym,
+    że mogą usunąć żądania dwóch bokserów z kolejki \verb|MSG_NOTIFY|
+\end{itemize}
+
+Sprzątacz -- Rezerwacja ringu:
+\begin{itemize}
+    \item Zwiększ zegar lamporta
+    \item Dodaj żądanie do własnej kolejki
+    \item Wyślij żądanie do pozostałych procesów \verb|MSG_REQUEST|
+    \item Czekaj aż będą spełnione warunki: otrzymano odpowiedź od
+    wszystkich procesów, jest dostępny conajmniej jeden ring, jesteś
+    pierwszy lub drugi w kolejce
+    \item Sekcja krytyczna:
+    \begin{itemize}
+        \item Znajdź pierwszy wolny ring i zajmij go (zaznacz w tablicy)
+    \end{itemize}
+    \item Usuń swoje żądanie z lokalnej kolejki
+    \item Powiadom wszystkie pozostałe procesy o zajętym ringu i o tym,
+    że mogą usunąć żądanie sprzątacza z kolejki \verb|MSG_NOTIFY|
+\end{itemize}
+
+Zwolnienie ringu (w przypadku bokserów wykonuje bokser o większym id):
+\begin{itemize}
+    \item Zwolnij ring (odznacz w tablicy)
+    \item Zwiększ lokalną liczbę dostępnych sędziów
+    \item Zwiększ zegar lamporta
+    \item Powiadom wszystkie pozostałe procesy o zwolneniu \verb|MSG_RELEASE|
+\end{itemize}
+
+Odebranie wiadomości:
+\begin{itemize}
+    \item Zaktualizuj zegar lamporta
+    \item Jeśli odebrano \verb|MSG_REQUEST|: dodaj żądanie do lokalnej
+    kolejki i  wyślij odpowiedź \verb|MSG_REPLY|
+    \item Jeśli otrzymano \verb|MSG_REPLY|: zanotuj fakt otrzymania
+    odpowiedzi
+    \item Jeśli otrzymano \verb|MSG_RELEASE|: zanotuj fakt zwolnienia
+    ringu (odznacz w tablicy), jeśli to wiadomość od boksera zwiększ
+    lokalną liczbę dostępnych sędziów
+    \item Jeśli otrzymano \verb|MSG_OPPONENT|: zanotuj numer ringu oraz
+    id przeciwnika, przejdź do fazy walki
+    \item Jeśli otrzymano \verb|MSG_NOTIFY|: zanotuj fakt zajęcia ringu,
+    jeśli to wiadomość od boksera zmniejsz lokalną liczbę dostępnych
+    sędziów, usuń odpowiednie żądania z kolejki (jeśli bokser: usuń
+    boksera wraz z przeciwnikiem, jeśli sprzątacz: usuń tylko jedno
+    żądanie)
+\end{itemize}
+
+
+\subsection{Analiza złożoności komunikacyjnej algorytmu}
+złożoność pojedynczego przebiegu jednej instancji algorytmu (czyli z punktu widzenia pojedynczego procesu) 
+złożoność komunikacyjna pakietowa, wyrażona w liczbie komunikatów
+złożoność czasowa przy założeniu jednostkowego czasu przesłania pojedynczego komunikatu w kanale
+należy wyznaczyć dokładną złożoność (nie rząd złożoności), a gdy możliwe są różne przypadki – należy podać złożoność pesymistyczną oraz średnią
+
+\section{Implementacja rozwiązania}
+lamport.h
+\hrule
+\lstinputlisting[language=C++]{../lamport.h}
+\hrule
+lamport.cpp
+\hrule
+\lstinputlisting[language=C++]{../lamport.cpp}
+\hrule
+boxer.h
+\hrule
+\lstinputlisting[language=C++]{../boxer.h}
+\hrule
+boxer.cpp
+\hrule
+\lstinputlisting[language=C++]{../boxer.cpp}
+\hrule
+
+\end{document}
