@@ -87,6 +87,7 @@ void notifyOpponent()
     MessageStruct message;
     message.timestamp = lamport.getTimestamp();
     message.ringId = myRing;
+    message.type = type;
     MPI_Send(&message, sizeof(message), MPI_BYTE,
              opponent, MSG_OPPONENT, MPI_COMM_WORLD);
     printf("Boxer %d notifying opponent: %d\n", rank, lamport.second().id);
@@ -98,6 +99,9 @@ void notifyOthers()
     //printf("Process %d timestamp: %d\n", rank, lamport.getTimestamp());
     for (int i = 0; i < size; i++) {
         if (i != rank) {
+            if (type == BOXER && i == opponent) {
+                continue;
+            }
             MessageStruct message;
             message.ringId = myRing;
             message.timestamp = lamport.getTimestamp();
@@ -316,6 +320,12 @@ int receive()
     if (status.MPI_TAG == MSG_OPPONENT) {
         opponent = status.MPI_SOURCE;
         myRing = message.ringId;
+        if (!ringTaken[message.ringId]) {
+            ringTaken[message.ringId] = true;
+            nAvailableReferees--;
+        }
+        lamport.remove(rank);
+        lamport.remove(opponent);
         printf("Boxer %d notified by opponent\n", rank);
     }
 
