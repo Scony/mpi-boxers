@@ -12,7 +12,7 @@
 #define NREFEREES 4
 #define NPROCS 32
 
-enum MsgTag { MSG_REQUEST, MSG_RELEASE, MSG_REPLY, MSG_OPPONENT, MSG_NOTIFY };
+enum MsgTag { MSG_REQUEST, MSG_RELEASE, MSG_REPLY, MSG_OPPONENT, MSG_NOTIFY, MSG_DONE };
 
 using namespace std;
 
@@ -20,6 +20,7 @@ int size, rank;
 int opponent = -1;
 int myRing;
 ProcessType type = BOXER;
+bool opponentDone = false;
 
 Lamport lamport;
 int nAvailableReferees = NREFEREES;
@@ -28,8 +29,18 @@ bool replied[NPROCS] = {false};
 
 void fight()
 {
+    if (rank < opponent) {
+        opponentDone = false;
+    }
     printf(">>>>>>>>>> Boxer %d fighting with %d on ring %d\n", rank, opponent, myRing);
     sleep(1 + (random() % 3));
+    if (rank > opponent) {
+            MessageStruct message;
+            message.type = type;
+            message.timestamp = lamport.getTimestamp();
+            MPI_Send(&message, sizeof(message), MPI_BYTE,
+                     opponent, MSG_DONE, MPI_COMM_WORLD);
+    }
 }
 
 void clean()
@@ -349,6 +360,12 @@ int receive()
         }
     }
 
+    if (status.MPI_TAG == MSG_DONE) {
+        if (processId == opponent) {
+            opponentDone = true;
+        }
+    }
+
     return status.MPI_TAG;
 }
 
@@ -358,7 +375,10 @@ void boxerLoop()
         acquire();
         fight();
         if (rank < opponent) {
-            release();
+             while (!opponentDone) {
+                 receive();
+             }
+             release();
         }
         rest();
     }
