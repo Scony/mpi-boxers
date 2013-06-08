@@ -103,7 +103,8 @@ Odebranie wiadomości:
     ringu (odznacz w tablicy), jeśli to wiadomość od boksera zwiększ
     lokalną liczbę dostępnych sędziów
     \item Jeśli otrzymano \verb|MSG_OPPONENT|: zanotuj numer ringu oraz
-    id przeciwnika, przejdź do fazy walki
+    id przeciwnika, zanotuj fakt zajęcia ringu i sędziego, usuń własne
+    żądanie oraz żądanie przeciwnika z kolejki, przejdź do fazy walki
     \item Jeśli otrzymano \verb|MSG_NOTIFY|: zanotuj fakt zajęcia ringu,
     jeśli to wiadomość od boksera zmniejsz lokalną liczbę dostępnych
     sędziów, usuń odpowiednie żądania z kolejki (jeśli bokser: usuń
