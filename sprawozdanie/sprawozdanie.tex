@@ -32,7 +32,8 @@ Pętla boksera:
 \begin{itemize}
     \item Rezerwacja ringu
     \item Walka
-    \item Zwolnienie ringu (bokser o większym id z pary)
+    \item Zwolnienie ringu (bokser o większym id z pary), jeśli
+    przeciwnik jeszcze nie zakończył to czekaj
     \item Rekowalescencja
 \end{itemize}
 
@@ -110,6 +111,8 @@ Odebranie wiadomości:
     sędziów, usuń odpowiednie żądania z kolejki (jeśli bokser: usuń
     boksera wraz z przeciwnikiem, jeśli sprzątacz: usuń tylko jedno
     żądanie)
+    \item Jeśli otrzymano \verb|MSG_DONE|: zanotuj, że przeciwnik
+    zakończył walkę
 \end{itemize}
 
 
