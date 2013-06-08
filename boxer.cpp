@@ -186,8 +186,7 @@ void acquire()
               countRings() > 0 &&
               nAvailableReferees > 0) ) {
 
-        // wait
-        // receive msgs etc
+        // wait, receive msgs etc
         int messageTag = receive();
 	if (messageTag == MSG_OPPONENT) {
             return;
@@ -219,7 +218,6 @@ void cleanerAcquire()
 
     request();
 
-    int nReplies = 0;
     clearReplied();
     while ( !(allReplied() &&
               (lamport.isFirst(rank) || lamport.isSecond(rank)) &&
@@ -227,12 +225,8 @@ void cleanerAcquire()
 	if (allReplied()) {
             debug();
         }
-        // wait
-        // receive msgs etc
-        int messageTag = receive();
-        if (messageTag == MSG_REPLY) {
-            nReplies++;
-        }
+        // wait, receive msgs etc
+        receive();
         //printf("Cleaner %d queue front: %d, timestamp: %d\n", rank, lamport.front().id, lamport.front().timestamp);
     }
 
