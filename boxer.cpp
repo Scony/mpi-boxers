@@ -25,6 +25,7 @@ bool opponentDone = false;
 Lamport lamport;
 int nAvailableReferees = NREFEREES;
 bool ringTaken[NRINGS] = {false};
+int ringTimestamp[NRINGS] = {0};
 bool replied[NPROCS] = {false};
 
 void fight()
@@ -314,8 +315,10 @@ int receive()
     if (status.MPI_TAG == MSG_RELEASE) {
         printf("Boxer %d received release from boxer %d, timestamp %d\n",
               rank, processId, message.timestamp);
-        if (ringTaken[message.ringId]) {
+        if (ringTaken[message.ringId] &&
+                message.timestamp >= ringTimestamp[message.ringId]) {
             ringTaken[message.ringId] = false;
+            ringTimestamp[message.ringId] = message.timestamp;
             if (message.type == BOXER) {
                 nAvailableReferees++;
             }
@@ -325,6 +328,7 @@ int receive()
     if (status.MPI_TAG == MSG_OPPONENT) {
         opponent = status.MPI_SOURCE;
         myRing = message.ringId;
+        ringTimestamp[message.ringId] = message.timestamp;
         if (!ringTaken[message.ringId]) {
             ringTaken[message.ringId] = true;
             nAvailableReferees--;
@@ -336,6 +340,7 @@ int receive()
 
     if (status.MPI_TAG == MSG_NOTIFY) {
         printf("Boxer %d received notify\n", rank);
+        ringTimestamp[message.ringId] = message.timestamp;
         if (!ringTaken[message.ringId]) {
             ringTaken[message.ringId] = true;
             if (message.type == BOXER) {
