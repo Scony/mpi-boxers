@@ -7,6 +7,11 @@
 
 using namespace std;
 
+Lamport::Lamport()
+{
+    timestamp = 1;
+}
+
 QueueElement::QueueElement(int timestamp, int id, ProcessType type)
 {
     this->timestamp = timestamp;

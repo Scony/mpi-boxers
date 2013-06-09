@@ -25,6 +25,7 @@ class Lamport
     int timestamp;
 
     public:
+    Lamport();
     void increment();
     void update(int received);
     void enqueue(QueueElement &e);
