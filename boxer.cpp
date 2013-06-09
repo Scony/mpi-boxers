@@ -319,9 +319,9 @@ int receive()
                 message.timestamp >= ringTimestamp[message.ringId]) {
             ringTaken[message.ringId] = false;
             ringTimestamp[message.ringId] = message.timestamp;
-            if (message.type == BOXER) {
-                nAvailableReferees++;
-            }
+        }
+        if (message.type == BOXER) {
+            nAvailableReferees++;
         }
     }
 
@@ -331,8 +331,8 @@ int receive()
         ringTimestamp[message.ringId] = message.timestamp;
         if (!ringTaken[message.ringId]) {
             ringTaken[message.ringId] = true;
-            nAvailableReferees--;
         }
+        nAvailableReferees--;
         lamport.remove(rank);
         lamport.remove(opponent);
         printf("Boxer %d notified by opponent\n", rank);
@@ -343,9 +343,9 @@ int receive()
         ringTimestamp[message.ringId] = message.timestamp;
         if (!ringTaken[message.ringId]) {
             ringTaken[message.ringId] = true;
-            if (message.type == BOXER) {
-                nAvailableReferees--;
-            }
+        }
+        if (message.type == BOXER) {
+            nAvailableReferees--;
         }
         lamport.remove(processId);
         //if (rank == 1) {
