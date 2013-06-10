@@ -12,7 +12,14 @@
 #define NREFEREES 4
 #define NPROCS 32
 
-enum MsgTag { MSG_REQUEST, MSG_RELEASE, MSG_REPLY, MSG_OPPONENT, MSG_NOTIFY, MSG_DONE };
+enum MsgTag {
+    MSG_REQUEST,
+    MSG_RELEASE,
+    MSG_REPLY,
+    MSG_OPPONENT,
+    MSG_NOTIFY,
+    MSG_DONE
+};
 
 using namespace std;
 
@@ -33,7 +40,8 @@ void fight()
     if (rank < opponent) {
         opponentDone = false;
     }
-    printf(">>>>>>>>>> Boxer %d fighting with %d on ring %d\n", rank, opponent, myRing);
+    printf(">>>>>>>>>> Boxer %d fighting with %d on ring %d\n",
+            rank, opponent, myRing);
     sleep(1 + (random() % 3));
     if (rank > opponent) {
             MessageStruct message;
@@ -94,7 +102,6 @@ void notifyOpponent()
 {
     printf("Boxer %d, opponent: %d\n", rank, opponent);
 
-    //lamport.increment();
     //printf("Process %d timestamp: %d\n", rank, lamport.getTimestamp());
     MessageStruct message;
     message.timestamp = lamport.getTimestamp();
@@ -102,12 +109,12 @@ void notifyOpponent()
     message.type = type;
     MPI_Send(&message, sizeof(message), MPI_BYTE,
              opponent, MSG_OPPONENT, MPI_COMM_WORLD);
-    printf("Boxer %d notifying opponent: %d\n", rank, lamport.second().id);
+    printf("Boxer %d notifying opponent: %d\n",
+            rank, lamport.second().id);
 }
 
 void notifyOthers()
 {
-    //lamport.increment();
     //printf("Process %d timestamp: %d\n", rank, lamport.getTimestamp());
     for (int i = 0; i < size; i++) {
         if (i != rank) {
@@ -168,7 +175,6 @@ void clearReplied()
 
 void debug()
 {
-    // printf("-----\n");
     int count = countRings();
     lamport.printQueue(rank);
     printf("   %d: nAvailableReferees = %d\n", rank, nAvailableReferees);
@@ -228,7 +234,8 @@ void cleanerAcquire()
 	if (allReplied() && messageTag != 1) {
             debug();
         }
-        //printf("Cleaner %d queue front: %d, timestamp: %d\n", rank, lamport.front().id, lamport.front().timestamp);
+        //printf("Cleaner %d queue front: %d, timestamp: %d\n",
+        //       rank, lamport.front().id, lamport.front().timestamp);
     }
 
     myRing = takeRing();
@@ -237,11 +244,6 @@ void cleanerAcquire()
     }
     lamport.remove(rank);
     notifyOthers();
-
-    //printf("-----\n");
-    //lamport.printQueue(rank);
-    //printf("   %d: timestamp = %d\n", rank, lamport.getTimestamp());
-    //printf("   %d: nAvailableReferees = %d\n", rank, nAvailableReferees);
 
     printf("Cleaner %d acquired ring\n", rank);
 }
@@ -277,13 +279,15 @@ int receive()
     // update timestamp
     // if request -> enqueue and reply with timestamp
     // if release -> remove request from queue
-    // if reply -> just return message type (calling function can count replies)
+    // if reply -> just return message type
+    //             (calling function can count replies)
     usleep(100000); // 100 ms
 
     MessageStruct message;
     MPI_Status status;
     int flag = 0;
-    MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+    MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
+               &flag, &status);
     if (!flag) {
         return -1;
     }
@@ -293,7 +297,8 @@ int receive()
     int processId = status.MPI_SOURCE;
 
     if (status.MPI_TAG == MSG_REQUEST) {
-        // printf("Boxer %d received request from boxer %d, timestamp %d\n", rank, processId, message.timestamp);
+        // printf("Boxer %d received request from boxer %d, timestamp %d\n",
+        //        rank, processId, message.timestamp);
         QueueElement request(message.timestamp, processId, message.type);
         lamport.enqueue(request);
 
@@ -304,7 +309,8 @@ int receive()
     }
 
     if (status.MPI_TAG == MSG_REPLY) {
-        // printf("Boxer %d received reply from %d\n", rank, status.MPI_SOURCE);
+        // printf("Boxer %d received reply from %d\n",
+        //        rank, status.MPI_SOURCE);
         if (!replied[status.MPI_SOURCE]) {
             replied[status.MPI_SOURCE] = true;
             return MSG_REPLY;
@@ -348,14 +354,8 @@ int receive()
             nAvailableReferees--;
         }
         lamport.remove(processId);
-        //if (rank == 1) {
-        //    printf("removed %d\n", processId);
-        //}
         if (message.type == BOXER) {
             lamport.remove(message.opponent);
-            //if (rank == 1) {
-            //    printf("removed %d\n", opponent);
-            //}
         }
     }
 
