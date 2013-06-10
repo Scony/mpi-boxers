@@ -223,11 +223,11 @@ void cleanerAcquire()
     while ( !(allReplied() &&
               (lamport.isFirst(rank) || lamport.isSecond(rank)) &&
               countRings() > 0) ) {
-	if (allReplied()) {
+        // wait, receive msgs etc
+        int messageTag = receive();
+	if (allReplied() && messageTag != 1) {
             debug();
         }
-        // wait, receive msgs etc
-        receive();
         //printf("Cleaner %d queue front: %d, timestamp: %d\n", rank, lamport.front().id, lamport.front().timestamp);
     }
 
