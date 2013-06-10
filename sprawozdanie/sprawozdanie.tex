@@ -45,9 +45,6 @@ Pętla sprzątacza:
     \item Zwolnienie ringu
 \end{itemize}
 
-W czasie oczekiwania na ring oraz odpoczynku procesy przyjmują i reagują
-na wiadomości.
-
 Bokser -- Rezerwacja ringu:
 \begin{itemize}
     \item Zwiększ zegar lamporta
@@ -114,6 +111,22 @@ Odebranie wiadomości:
     \item Jeśli otrzymano \verb|MSG_DONE|: zanotuj, że przeciwnik
     zakończył walkę
 \end{itemize}
+
+Aby zapobiedz anomaliom związanym z otrzymywaniem wiadomości
+\verb|MSG_NOTIFY| oraz \verb|MSG_RELEASE| w złej kolejności, po
+otrzymaniu \verb|MSG_NOTIFY| proces zapamiętuje znacznik czasowy tej
+wiadomości i zaznacza zwolnienie ringu po otrzymaniu wiadomości \verb|MSG_RELEASE|
+tylko jeśli znacznik czasowy jest większy. Chroni to przed sytuacją
+typu:
+\begin{itemize}
+    \item \verb|MSG_NOTIFY| od procesu 1: zajęcie ringu 2
+    \item \verb|MSG_NOTIFY| od procesu 2: zajęcie ringu 2 (proces 2 w
+    międzyczasie otrzymał wiadomość o zwolnieniu ringu 2 przez proces 1)
+    \item \verb|MSG_RELEASE| od procesu 1: zwolnienie ringu 2
+    \item W tym momencie ring 2 powinien być nadal zaznaczony jako
+    zajęty
+\end{itemize}
+
 
 
 \subsection{Analiza złożoności komunikacyjnej algorytmu}
