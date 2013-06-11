@@ -32,7 +32,7 @@
 
 \section{Algorytm rozwiązania}
 \subsection{Definicja problemu}
-\emph{Bokserzy rozgoryczeni korumpcją panoszącą się w istniejących federacjach boksu zawodowego, założyli własną, w której każda walka odbywa się tak długo, aż obaj zawodnicy padną na matę. Sala turniejowa mieści R ringów. Bokserzy wybierają ring i staczają walkę. Walka wymaga zarezerwowania sędziego. Po zakończeniu walki, bokser jest wynoszony i wraca do cyklu walk dopiero po zakończeniu rekonwalescencji. Walka i rekonwalescencja trwają przez czas o zmiennej długości. Dodatkowo osobni pracownicy co pewien czas zajmują ring, żeby zmyć krew i pozbierać zęby (i w tym czasie nie może się odbywać walka). Ringi (R) i sędziowie (S \textless R) to zasoby. Bokserzy (B \textgreater 2R) oraz pracownicy (P \textless R) to procesy.}
+\emph{Bokserzy rozgoryczeni korupcją panoszącą się w istniejących federacjach boksu zawodowego, założyli własną, w której każda walka odbywa się tak długo, aż obaj zawodnicy padną na matę. Sala turniejowa mieści R ringów. Bokserzy wybierają ring i staczają walkę. Walka wymaga zarezerwowania sędziego. Po zakończeniu walki, bokser jest wynoszony i wraca do cyklu walk dopiero po zakończeniu rekonwalescencji. Walka i rekonwalescencja trwają przez czas o zmiennej długości. Dodatkowo osobni pracownicy co pewien czas zajmują ring, żeby zmyć krew i pozbierać zęby (i w tym czasie nie może się odbywać walka). Ringi (R) i sędziowie (S \textless R) to zasoby. Bokserzy (B \textgreater 2R) oraz pracownicy (P \textless R) to procesy.}
 
 \subsection{Założenia przyjętego modelu komunikacji}
 \begin{itemize}
@@ -50,7 +50,7 @@
     \item Walka
     \item Zwolnienie ringu (bokser o większym id z pary), jeśli
     przeciwnik jeszcze nie zakończył to czekaj
-    \item Rekowalescencja
+    \item Rekonwalescencja
 \end{itemize}
 
 \underline{Pętla sprzątacza:}
@@ -67,7 +67,7 @@
     \item Dodaj żądanie do własnej kolejki
     \item Wyślij żądanie do pozostałych procesów \verb|MSG_REQUEST|
     \item Czekaj aż będą spełnione warunki: otrzymano odpowiedź od
-    wszystkich procesów, jest dostępny conajmniej jeden ring i jeden
+    wszystkich procesów, jest dostępny co najmniej jeden ring i jeden
     sędzia, jesteś pierwszy w kolejce a drugi proces w kolejce jest
     bokserem
     \item Sekcja krytyczna:
@@ -87,7 +87,7 @@
     \item Dodaj żądanie do własnej kolejki
     \item Wyślij żądanie do pozostałych procesów \verb|MSG_REQUEST|
     \item Czekaj aż będą spełnione warunki: otrzymano odpowiedź od
-    wszystkich procesów, jest dostępny conajmniej jeden ring, jesteś
+    wszystkich procesów, jest dostępny co najmniej jeden ring, jesteś
     pierwszy lub drugi w kolejce
     \item Sekcja krytyczna:
     \begin{itemize}
@@ -103,7 +103,7 @@
     \item Zwolnij ring (odznacz w tablicy)
     \item Zwiększ lokalną liczbę dostępnych sędziów
     \item Zwiększ zegar lamporta
-    \item Powiadom wszystkie pozostałe procesy o zwolneniu \verb|MSG_RELEASE|
+    \item Powiadom wszystkie pozostałe procesy o zwolnieniu \verb|MSG_RELEASE|
 \end{itemize}
 
 \underline{Odebranie wiadomości:}
@@ -128,7 +128,7 @@
     zakończył walkę
 \end{itemize}
 
-Aby zapobiedz anomaliom związanym z otrzymywaniem wiadomości
+Aby zapobiec anomaliom związanym z otrzymywaniem wiadomości
 \verb|MSG_NOTIFY| oraz \verb|MSG_RELEASE| w złej kolejności, po
 otrzymaniu \verb|MSG_NOTIFY| proces zapamiętuje znacznik czasowy tej
 wiadomości i zaznacza zwolnienie ringu po otrzymaniu wiadomości \verb|MSG_RELEASE|
@@ -160,7 +160,7 @@ widzenia pojedynczego procesu.
   \item oczekiwanie na odpowiedzi: $N - 1$
   \item powiadomienie przeciwnika: $1$
   \item powiadomienie pozostałych o zajętym ringu: $N - 2$
-  \item powiadomienie o zwolnieniu sekcji krytycznej: $N - 1$
+  \item powiadomienie o zwolnieniu ringu: $N - 1$
   \item \textbf{Złożoność:} $4(N - 1)$
   \end{itemize}
 \item \textbf{Bokser--przeciwnik}
@@ -174,7 +174,7 @@ widzenia pojedynczego procesu.
   \item rozsyłanie żądań: $N - 1$
   \item oczekiwanie na odpowiedzi: $N - 1$
   \item rozsyłanie powiadomienia o zajętym ringu: $N - 1$
-  \item powiadomienie o zwolnieniu sekcji krytycznej: $N - 1$
+  \item powiadomienie o zwolnieniu ringu: $N - 1$
   \item \textbf{Złożoność:} $4(N - 1)$
   \end{itemize}
 \end{itemize}
@@ -187,7 +187,7 @@ widzenia pojedynczego procesu.
   \item oczekiwanie na odpowiedzi: $1$
   \item powiadomienie przeciwnika: $1$
   \item powiadomienie pozostałych o zajętym ringu: $1$
-  \item powiadomienie o zwolnieniu sekcji krytycznej: $1$
+  \item powiadomienie o zwolnieniu ringu: $1$
   \item \textbf{Złożoność:} $5$
   \end{itemize}
 \item \textbf{Bokser--przeciwnik}
@@ -201,7 +201,7 @@ widzenia pojedynczego procesu.
   \item rozsyłanie żądań: $1$
   \item oczekiwanie na odpowiedzi: $1$
   \item rozsyłanie powiadomienia o zajętym ringu: $1$
-  \item powiadomienie o zwolnieniu sekcji krytycznej: $1$
+  \item powiadomienie o zwolnieniu ringu: $1$
   \item \textbf{Złożoność:} $4$
   \end{itemize}
 \end{itemize}
