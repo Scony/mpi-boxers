@@ -209,18 +209,21 @@ void acquire()
         }
     }
 
-    myRing = takeRing();
-    if (myRing < 0) dprintf(2, "takeRing returned -1\n");
+    if(iAmOpponent == 0) {
 
-    nAvailableReferees--;
-    opponent = lamport.second().id;
-    notifyOpponent();
+      myRing = takeRing();
+      if (myRing < 0) dprintf(2, "takeRing returned -1\n");
 
-    lamport.remove(rank);
-    lamport.remove(opponent);
-    notifyOthers();
+      nAvailableReferees--;
+      opponent = lamport.second().id;
+      notifyOpponent();
 
-    printf("Boxer %d acquired ring %d\n", rank, myRing);
+      lamport.remove(rank);
+      lamport.remove(opponent);
+      notifyOthers();
+    
+      printf("Boxer %d acquired ring %d\n", rank, myRing);
+    }
 }
 
 void cleanerAcquire()
