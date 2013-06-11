@@ -44,11 +44,12 @@ void fight()
             rank, opponent, myRing);
     sleep(1 + (random() % 3));
     if (rank > opponent) {
-            MessageStruct message;
-            message.type = type;
-            message.timestamp = lamport.getTimestamp();
-            MPI_Send(&message, sizeof(message), MPI_BYTE,
-                     opponent, MSG_DONE, MPI_COMM_WORLD);
+        lamport.receive();
+        MessageStruct message;
+        message.type = type;
+        message.timestamp = lamport.getTimestamp();
+        MPI_Send(&message, sizeof(message), MPI_BYTE,
+                    opponent, MSG_DONE, MPI_COMM_WORLD);
     }
 }
 
@@ -102,6 +103,7 @@ void notifyOpponent()
 {
     printf("Boxer %d, opponent: %d\n", rank, opponent);
 
+    lamport.increment();
     //printf("Process %d timestamp: %d\n", rank, lamport.getTimestamp());
     MessageStruct message;
     message.timestamp = lamport.getTimestamp();
@@ -115,6 +117,7 @@ void notifyOpponent()
 
 void notifyOthers()
 {
+    lamport.increment();
     //printf("Process %d timestamp: %d\n", rank, lamport.getTimestamp());
     for (int i = 0; i < size; i++) {
         if (i != rank) {
