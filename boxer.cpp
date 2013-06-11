@@ -64,7 +64,7 @@ void rest()
 
     int period = 1 + (random() % 3);
     for (int i = 0; i < period; i++) {
-       receive();
+       // receive();
        sleep(1);
     }
 }
@@ -74,7 +74,7 @@ void cleanerRest()
     printf("Cleaner %d resting\n", rank);
     int period = 4 + (random() % 5);
     for (int i = 0; i < period; i++) {
-       receive();
+       // receive();
        sleep(1);
     }
 }
@@ -192,10 +192,10 @@ void acquire()
               lamport.isFirst(rank) &&
               lamport.isSecondBoxer() &&
               countRings() > 0 &&
-              nAvailableReferees > 0) ||
-	    (iAmOpponent > 0 &&
-	     !allReplied())
-	    ) {
+              nAvailableReferees > 0)) {
+
+        if(iAmOpponent > 0 && allReplied())
+	    break;
 
         // wait, receive msgs etc
         int messageTag = receive();
@@ -238,7 +238,7 @@ void cleanerAcquire()
               countRings() > 0) ) {
         // wait, receive msgs etc
         int messageTag = receive();
-	if (allReplied() && messageTag != 1) {
+	if (allReplied() && messageTag != -1) {
             debug();
         }
         //printf("Cleaner %d queue front: %d, timestamp: %d\n",
