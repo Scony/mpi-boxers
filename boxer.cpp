@@ -44,7 +44,7 @@ void fight()
             rank, opponent, myRing);
     sleep(1 + (random() % 3));
     if (rank > opponent) {
-        lamport.receive();
+        lamport.increment();
         MessageStruct message;
         message.type = type;
         message.timestamp = lamport.getTimestamp();
