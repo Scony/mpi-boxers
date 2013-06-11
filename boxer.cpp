@@ -183,6 +183,7 @@ void debug()
 
 void acquire()
 {
+    int iAmOpponent = 0;
     printf("Boxer %d wants to acquire a ring\n", rank);
     request();
 
@@ -191,12 +192,15 @@ void acquire()
               lamport.isFirst(rank) &&
               lamport.isSecondBoxer() &&
               countRings() > 0 &&
-              nAvailableReferees > 0) ) {
+              nAvailableReferees > 0) ||
+	    (iAmOpponent > 0 &&
+	     !allReplied())
+	    ) {
 
         // wait, receive msgs etc
         int messageTag = receive();
 	if (messageTag == MSG_OPPONENT) {
-            return;
+	    iAmOpponent = 1;//return;
         }
         //printf("Boxer %d queue front: %d, timestamp: %d\n",
         //        rank, lamport.front().id, lamport.front().timestamp);
