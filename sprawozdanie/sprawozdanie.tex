@@ -5,11 +5,14 @@
 \usepackage[OT4]{fontenc}
 \usepackage{graphicx,color}
 \usepackage{listings}
+\usepackage{multirow}
 \usepackage[a4paper,left=3cm,right=3cm,top=3cm,bottom=3cm,headsep=1.2cm]{geometry}
 \selectlanguage{polish}
 
-\title{\textbf{Laboratorium Podstawy Przetwarzania Rozproszonego}}
-\author{Jakub Szwachła \\ 101473 \and  Paweł Lampe \\ 99277}
+\title{\textbf{Laboratorium Podstawy Przetwarzania Rozproszonego \\ SPRAWOZDANIE z zadania 8 \\ Maniakalni Bokserzy}}
+%\author{Jakub Szwachła \\ 101473 \and  Paweł Lampe \\ 99277}
+\author{}
+\date{}
 
 \lstset{numbers=left}
 
@@ -17,9 +20,19 @@
 
 \maketitle
 
+\begin{center}
+    \begin{tabular}{| l | l | l |}
+    \hline
+    \textbf{Nazwisko i Imię} & \textbf{album} & \textbf{Termin zajęć} \\ \hline
+    Szwachła Jakub & 101473 & \multirow{2}{*}{środa 11:45 tydzień nieparzysty} \\
+    Lampe Paweł & 99277 & \\
+    \hline
+    \end{tabular}
+\end{center}
+
 \section{Algorytm rozwiązania}
 \subsection{Definicja problemu}
-treść
+\emph{Bokserzy rozgoryczeni korumpcją panoszącą się w istniejących federacjach boksu zawodowego, założyli własną, w której każda walka odbywa się tak długo, aż obaj zawodnicy padną na matę. Sala turniejowa mieści R ringów. Bokserzy wybierają ring i staczają walkę. Walka wymaga zarezerwowania sędziego. Po zakończeniu walki, bokser jest wynoszony i wraca do cyklu walk dopiero po zakończeniu rekonwalescencji. Walka i rekonwalescencja trwają przez czas o zmiennej długości. Dodatkowo osobni pracownicy co pewien czas zajmują ring, żeby zmyć krew i pozbierać zęby (i w tym czasie nie może się odbywać walka). Ringi (R) i sędziowie (S \textless R) to zasoby. Bokserzy (B \textgreater 2R) oraz pracownicy (P \textless R) to procesy.}
 
 \subsection{Założenia przyjętego modelu komunikacji}
 \begin{itemize}
@@ -31,7 +44,7 @@ treść
 
 \subsection{Algorytm wzajemnego wykluczania}
 
-Pętla boksera:
+\underline{Pętla boksera:}
 \begin{itemize}
     \item Rezerwacja ringu
     \item Walka
@@ -40,7 +53,7 @@ Pętla boksera:
     \item Rekowalescencja
 \end{itemize}
 
-Pętla sprzątacza:
+\underline{Pętla sprzątacza:}
 \begin{itemize}
     \item Odpoczynek
     \item Rezerwacja ringu
@@ -48,7 +61,7 @@ Pętla sprzątacza:
     \item Zwolnienie ringu
 \end{itemize}
 
-Bokser -- Rezerwacja ringu:
+\underline{Bokser -- Rezerwacja ringu:}
 \begin{itemize}
     \item Zwiększ zegar lamporta
     \item Dodaj żądanie do własnej kolejki
@@ -68,7 +81,7 @@ Bokser -- Rezerwacja ringu:
     że mogą usunąć żądania dwóch bokserów z kolejki \verb|MSG_NOTIFY|
 \end{itemize}
 
-Sprzątacz -- Rezerwacja ringu:
+\underline{Sprzątacz -- Rezerwacja ringu:}
 \begin{itemize}
     \item Zwiększ zegar lamporta
     \item Dodaj żądanie do własnej kolejki
@@ -85,7 +98,7 @@ Sprzątacz -- Rezerwacja ringu:
     że mogą usunąć żądanie sprzątacza z kolejki \verb|MSG_NOTIFY|
 \end{itemize}
 
-Zwolnienie ringu (w przypadku bokserów wykonuje bokser o większym id):
+\underline{Zwolnienie ringu (w przypadku bokserów wykonuje bokser o większym id):}
 \begin{itemize}
     \item Zwolnij ring (odznacz w tablicy)
     \item Zwiększ lokalną liczbę dostępnych sędziów
@@ -93,7 +106,7 @@ Zwolnienie ringu (w przypadku bokserów wykonuje bokser o większym id):
     \item Powiadom wszystkie pozostałe procesy o zwolneniu \verb|MSG_RELEASE|
 \end{itemize}
 
-Odebranie wiadomości:
+\underline{Odebranie wiadomości:}
 \begin{itemize}
     \item Zaktualizuj zegar lamporta
     \item Jeśli odebrano \verb|MSG_REQUEST|: dodaj żądanie do lokalnej
@@ -133,27 +146,82 @@ typu:
 
 
 \subsection{Analiza złożoności komunikacyjnej algorytmu}
-złożoność pojedynczego przebiegu jednej instancji algorytmu (czyli z punktu widzenia pojedynczego procesu) 
-złożoność komunikacyjna pakietowa, wyrażona w liczbie komunikatów
-złożoność czasowa przy założeniu jednostkowego czasu przesłania pojedynczego komunikatu w kanale
-należy wyznaczyć dokładną złożoność (nie rząd złożoności), a gdy możliwe są różne przypadki – należy podać złożoność pesymistyczną oraz średnią
 
-\section{Implementacja rozwiązania}
-lamport.h
-\hrule
-\lstinputlisting[language=C++]{../lamport.h}
-\hrule
-lamport.cpp
-\hrule
-\lstinputlisting[language=C++]{../lamport.cpp}
-\hrule
-boxer.h
-\hrule
-\lstinputlisting[language=C++]{../boxer.h}
-\hrule
-boxer.cpp
-\hrule
-\lstinputlisting[language=C++]{../boxer.cpp}
-\hrule
+Przed przystąpieniem do szczegółowej analizy, zaznaczyć należy, iż $N$ --
+to ilość wszystkich procesów. Złożoności ponadto rozpatrywane są z punktu
+widzenia pojedynczego procesu.
+
+\subsubsection{Złożoność komunikacyjna pakietowa (wyrażona w liczbie komunikatów)}
+
+\begin{itemize}
+\item \textbf{Bokser--inicjator}
+  \begin{itemize}
+  \item rozsyłanie żądań: $N - 1$
+  \item oczekiwanie na odpowiedzi: $N - 1$
+  \item powiadomienie przeciwnika: $1$
+  \item powiadomienie pozostałych o zajętym ringu: $N - 2$
+  \item powiadomienie o zwolnieniu sekcji krytycznej: $N - 1$
+  \item \textbf{Złożoność:} $4(N - 1)$
+  \end{itemize}
+\item \textbf{Bokser--przeciwnik}
+  \begin{itemize}
+  \item rozsyłanie żądań: $N - 1$
+  \item oczekiwanie na odpowiedzi: $N - 1$
+  \item \textbf{Złożoność:} $2(N - 1)$
+  \end{itemize}
+\item \textbf{Sprzątacz}
+  \begin{itemize}
+  \item rozsyłanie żądań: $N - 1$
+  \item oczekiwanie na odpowiedzi: $N - 1$
+  \item rozsyłanie powiadomienia o zajętym ringu: $N - 1$
+  \item powiadomienie o zwolnieniu sekcji krytycznej: $N - 1$
+  \item \textbf{Złożoność:} $4(N - 1)$
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{Złożoność czasowa (przy założeniu jednostkowego czasu przesłania pojedynczego komunikatu w kanale)}
+\begin{itemize}
+\item \textbf{Bokser--inicjator}
+  \begin{itemize}
+  \item rozsyłanie żądań: $1$
+  \item oczekiwanie na odpowiedzi: $1$
+  \item powiadomienie przeciwnika: $1$
+  \item powiadomienie pozostałych o zajętym ringu: $1$
+  \item powiadomienie o zwolnieniu sekcji krytycznej: $1$
+  \item \textbf{Złożoność:} $5$
+  \end{itemize}
+\item \textbf{Bokser--przeciwnik}
+  \begin{itemize}
+  \item rozsyłanie żądań: $1$
+  \item oczekiwanie na odpowiedzi: $1$
+  \item \textbf{Złożoność:} $2$
+  \end{itemize}
+\item \textbf{Sprzątacz}
+  \begin{itemize}
+  \item rozsyłanie żądań: $1$
+  \item oczekiwanie na odpowiedzi: $1$
+  \item rozsyłanie powiadomienia o zajętym ringu: $1$
+  \item powiadomienie o zwolnieniu sekcji krytycznej: $1$
+  \item \textbf{Złożoność:} $4$
+  \end{itemize}
+\end{itemize}
+
+%% \section{Implementacja rozwiązania}
+%% lamport.h
+%% \hrule
+%% \lstinputlisting[language=C++]{../lamport.h}
+%% \hrule
+%% lamport.cpp
+%% \hrule
+%% \lstinputlisting[language=C++]{../lamport.cpp}
+%% \hrule
+%% boxer.h
+%% \hrule
+%% \lstinputlisting[language=C++]{../boxer.h}
+%% \hrule
+%% boxer.cpp
+%% \hrule
+%% \lstinputlisting[language=C++]{../boxer.cpp}
+%% \hrule
 
 \end{document}
