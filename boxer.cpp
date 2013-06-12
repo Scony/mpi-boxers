@@ -65,7 +65,6 @@ void rest()
 
     int period = 1 + (random() % 3);
     for (int i = 0; i < period; i++) {
-       // receive();
        sleep(1);
     }
 }
@@ -75,7 +74,6 @@ void cleanerRest()
     printf("Cleaner %d resting\n", rank);
     int period = 4 + (random() % 5);
     for (int i = 0; i < period; i++) {
-       // receive();
        sleep(1);
     }
 }
@@ -396,10 +394,10 @@ void boxerLoop()
 void cleanerLoop()
 {
     while (1) {
-        cleanerRest();
         cleanerAcquire();
         clean();
         release();
+        cleanerRest();
     }
 }
 
