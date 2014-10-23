@@ -8,8 +8,8 @@
 #include "lamport.h"
 #include "boxer.h"
 
-#define NRINGS 5
-#define NREFEREES 4
+#define NRINGS 8
+#define NREFEREES 1
 #define NPROCS 32
 
 enum MsgTag {
@@ -176,10 +176,10 @@ void clearReplied()
 
 void debug()
 {
-    int count = countRings();
-    lamport.printQueue(rank);
-    printf("   %d: nAvailableReferees = %d\n", rank, nAvailableReferees);
-    printf("   %d: countRings() = %d\n", rank, count);
+    // int count = countRings();
+    // lamport.printQueue(rank);
+    // printf("   %d: nAvailableReferees = %d\n", rank, nAvailableReferees);
+    // printf("   %d: countRings() = %d\n", rank, count);
 }
 
 void acquire()
